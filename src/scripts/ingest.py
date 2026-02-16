@@ -48,7 +48,7 @@ vo = voyageai.Client(os.getenv("VOYAGE_API"))
 
 def get_connection_string():
     user = os.getenv("DB_USER")
-    password = os.getenv("DB_PASSWORD")
+    password = os.getenv("DB_PASS")
     host = os.getenv("DB_HOST")
     port = os.getenv("DB_PORT")
     dbname = os.getenv("DB_NAME")
@@ -77,7 +77,9 @@ def ingestPdf(filePath: str):
             with conn.cursor() as cur:
                 with cur.copy("COPY doc_chunks (content, embedding, filename) FROM STDIN") as copy:
                     for chunk, vector in zip(chunks, all_vectors):
-                        copy.write_row((chunk, vector, os.path.basename(filePath)))
+                        vector_str = "[" + ",".join(map(str, vector)) + "]"
+                        
+                        copy.write_row((chunk, vector_str, os.path.basename(filePath)))
         print(f"Successfully ingested {len(chunks)} chunks from {filePath}")
     except Exception as e:
         print(f"Error: {e}")
