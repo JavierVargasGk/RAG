@@ -11,7 +11,7 @@ def get_connection_string():
     port = os.getenv("DB_PORT")
     dbname = os.getenv("DB_NAME")
     
-    print(f"🔍 DB_USER: {user}")
-    sys.exit(1)
     
     return f"postgresql://{user}:{password}@{host}:{port}/{dbname}"
+
+
