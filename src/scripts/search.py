@@ -4,6 +4,7 @@ import voyageai
 from sentence_transformers import CrossEncoder
 import chainlit as cl
 import requests
+import subprocess
 import psycopg
 import sys
 from pathlib import Path
@@ -20,17 +21,14 @@ load_dotenv()
 vo = voyageai.Client(os.getenv("VOYAGE_API"))
 
 def get_ollama_endpoint():
-    # 1. Check if we are in WSL
     try:
-        # This command gets the Gateway IP (the Windows Host)
         window_ip = subprocess.check_output("ip route | grep default | awk '{print $3}'", shell=True).decode().strip()
-        # Test if Ollama is reachable on that IP
+        print(f"Detected Windows Host IP: {window_ip}")
         test_url = f"http://{window_ip}:11434/api/tags"
         requests.get(test_url, timeout=1)
         return f"http://{window_ip}:11434"
     except:
-        # 2. Fallback to localhost (for production or native Linux)
-        return "http://localhost:11434"
+        return f"http://localhost:11434"
 
 OLLAMA_BASE = get_ollama_endpoint()
 
@@ -61,7 +59,7 @@ async def main(message: cl.Message):
     #Ollama
     context = "\n---\n".join(ranked_candidates)
     prompt = f"Context: {context}\n\nQuestion: {message.content}\nAnswer:"
-    response = requests.post("http://{OLLAMA_BASE}:11434/api/generate", json={"model": "llama3.1", "prompt": prompt, "stream": False},timeout=30)
+    response = requests.post(f"{OLLAMA_BASE}/api/generate", json={"model": "llama3.1", "prompt": prompt, "stream": False},timeout=30)
     
     
     

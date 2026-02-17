@@ -1,5 +1,5 @@
 from pypdf import PdfReader
-from db import get_connection_string
+from db import get_connection_string, file_exists
 import voyageai
 import psycopg
 from dotenv import load_dotenv
@@ -7,17 +7,13 @@ import os
 
 def getTextFromPDF(filePath: str):
     reader = PdfReader(filePath)
-    full_text = []
-    for page in reader.pages:
-        page_text = page.extract_text()
-        if page_text:
-            full_text.append(page_text)
-    return "\n".join(full_text)
+    pages_data = []
+    for i, page in enumerate(reader.pages):
+        text = page.extract_text()
+        if text:
+            pages_data.append({"text": text, "page": i + 1})
+    return pages_data
 
-def getText(filePath: str):
-    with open(filePath, 'r', encoding='utf-8') as file:
-        data = file.read()
-    return data
 #Split data into chunks of 1000 characters with an overlap of 200 characters (or changed if needed)
 def getChunks(data: str,chunkSize: int = 1000, overlap: int=200):
     if(data == ""):
@@ -50,11 +46,25 @@ vo = voyageai.Client(os.getenv("VOYAGE_API"))
 
 
 def ingestPdf(filePath: str):
-    text = getTextFromPDF(filePath)
-    chunks = getChunks(text)
+    filename = os.path.basename(filePath)
+    
+    if (file_exists(filename)):
+        print(f"Skipping {filename}: Already exists.")
+        return
+    
+    pages_data = getTextFromPDF(filePath)
+    all_chunks = []
+    all_metadata = [] 
+
+    for page in pages_data:
+        page_chunks = getChunks(page["text"])
+        for chunk in page_chunks:
+            all_chunks.append(chunk)
+            all_metadata.append({"file": filename, "page": page["page"]})
+
     all_vectors = []
-    print(f"Embedding {len(chunks)} chunks in batches...")
-    for batch in makeBatches(chunks):
+    print(f"Embedding {len(all_chunks)} chunks from {filename}...")
+    for batch in makeBatches(all_chunks):
         res = vo.embed(
             batch, 
             model="voyage-finance-2", 
@@ -62,19 +72,20 @@ def ingestPdf(filePath: str):
         )
         all_vectors.extend(res.embeddings)
 
-    # DB 
+    # 4. DB 
     conn_str = get_connection_string()
     try:
         with psycopg.connect(conn_str) as conn:
             with conn.cursor() as cur:
-                with cur.copy("COPY doc_chunks (content, embedding, filename) FROM STDIN") as copy:
-                    for chunk, vector in zip(chunks, all_vectors):
+                sql = "COPY doc_chunks (content, embedding, filename, page_number) FROM STDIN"
+                with cur.copy(sql) as copy:
+                    for chunk, vector, meta in zip(all_chunks, all_vectors, all_metadata):
                         vector_str = "[" + ",".join(map(str, vector)) + "]"
+                        copy.write_row((chunk, vector_str, meta["file"], meta["page"]))
                         
-                        copy.write_row((chunk, vector_str, os.path.basename(filePath)))
-        print(f"Successfully ingested {len(chunks)} chunks from {filePath}")
+        print(f"Successfully ingested {len(all_chunks)} chunks from {filename}")
     except Exception as e:
-        print(f"Error: {e}")
+        print(f"Error during DB ingestion: {e}")
         
         
         
