@@ -1,4 +1,5 @@
 from pypdf import PdfReader
+from db import get_connection_string
 import voyageai
 import psycopg
 from dotenv import load_dotenv
@@ -45,15 +46,6 @@ def makeBatches(chunks, batchSize: int = 128):
 load_dotenv()
 #Using voyage cuz free for a while
 vo = voyageai.Client(os.getenv("VOYAGE_API"))
-
-def get_connection_string():
-    user = os.getenv("DB_USER")
-    password = os.getenv("DB_PASS")
-    host = os.getenv("DB_HOST")
-    port = os.getenv("DB_PORT")
-    dbname = os.getenv("DB_NAME")
-    
-    return f"postgresql://{user}:{password}@{host}:{port}/{dbname}"
 
 
 
