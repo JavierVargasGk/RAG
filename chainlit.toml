@@ -1,0 +1,36 @@
+[project]
+# Configuraciones base
+session_timeout = 3600
+cache = false
+
+[features]
+# Activamos LaTeX para tus ecuaciones de Moody's
+latex = true
+# Permitimos subida de archivos si lo necesitas luego
+[features.spontaneous_file_upload]
+enabled = true
+accept = ["*/*"]
+max_files = 20
+max_size_mb = 500
+
+[UI]
+# Nombre que aparecerá en la pestaña del navegador
+name = "MA-1005 Research Assistant"
+
+# ESTA ES LA LÍNEA QUE CONECTA TU CSS
+custom_css = "/public/style.css"
+
+# Forzamos el tema oscuro para que combine con el look de GitHub
+default_theme = "dark"
+
+# Ver los pasos del razonamiento de la IA
+cot = "full"
+
+# Evita que el README por defecto estorbe
+show_readme = false
+
+logo_file_url = ""    
+
+[meta]
+generated_by = "2.9.6"
+

@@ -1,0 +1,99 @@
+/**
+ * ALBERT - INVESTIGATION ASSISTANT THEME
+ * Look & Feel: GitHub Dark Mode
+ * Framework: Chainlit / Tailwind / MUI
+ */
+
+/* 1. CONFIGURACIÓN DE VARIABLES GLOBALES */
+:root {
+  --background: 212 12% 9% !important;   /* #0d1117 */
+  --foreground: 210 17% 82% !important;  /* #e6edf3 */
+  --primary: 212 92% 45% !important;      /* Blue 500 GitHub */
+  --primary-foreground: 0 0% 100% !important;
+  --border: 215 15% 18% !important;      /* #30363d */
+  --card: 212 12% 11% !important;        /* #161b22 */
+}
+
+/* 2. REBRANDING (ELIMINACIÓN DE LOGO Y RENOMBRE) */
+/* Oculta el logo original por clase, ID y selector de atributo de imagen */
+.cl-logo, 
+#header-logo, 
+.cl-header img,
+[data-testid="chat-logo"] {
+    display: none !important;
+}
+
+/* Inyecta el nombre del asistente 'ALBERT' mediante pseudo-elemento */
+.cl-header-customer-logo::after {
+    content: "ALBERT";
+    font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Monaco, Consolas, monospace;
+    font-weight: 900;
+    font-size: 1.3rem;
+    color: #58a6ff;
+    letter-spacing: -0.5px;
+    padding-left: 8px;
+    display: flex;
+    align-items: center;
+}
+
+/* 3. ARQUITECTURA DE FONDO */
+/* Asegura que no haya fugas de color blanco en el scroll o paneles */
+#root, body, main, .bg-background {
+    background-color: #0d1117 !important;
+}
+
+/* 4. COMPONENTES DE ENTRADA (PROMPT BAR) */
+/* Ajuste del contenedor de Material UI (MUI) y Stack de Chainlit */
+.cl-input-container, 
+.MuiInputBase-root,
+.MuiStack-root:has(> #chat-input) {
+    background-color: #0d1117 !important;
+    border: 1px solid #30363d !important;
+    border-radius: 6px !important;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+/* Área de texto interactiva */
+#chat-input {
+    background-color: transparent !important;
+    color: #e6edf3 !important;
+    caret-color: #58a6ff;
+}
+
+/* Estado Focus: Simulación de búsqueda en GitHub */
+.cl-input-container:focus-within {
+    border-color: #0969da !important;
+    box-shadow: 0 0 0 3px rgba(31, 111, 235, 0.3) !important;
+}
+
+/* 5. ELEMENTOS DE ACCIÓN (BOTONES) */
+/* Reemplazo del color institucional (Rojo) por Azul Corporativo */
+button[type="submit"], 
+.bg-primary {
+    background-color: #0969da !important;
+    color: #ffffff !important;
+    border-radius: 6px;
+}
+
+button[type="submit"]:hover {
+    background-color: #1f6feb !important;
+}
+
+/* 6. RAG COMPONENTS (FUENTES Y CITAS) */
+/* Estilo para los bloques de documentos recuperados (Chunks) */
+.cl-source {
+    background-color: #161b22 !important;
+    border: 1px solid #30363d !important;
+    color: #8b949e !important;
+    font-size: 0.85rem;
+}
+
+/* 7. VISUALIZACIÓN DE MATEMÁTICAS (LATEX) */
+/* Contenedor KaTeX optimizado para contraste oscuro */
+.katex-display {
+    background: #161b22 !important;
+    border: 1px solid #30363d !important;
+    padding: 1.2rem !important;
+    border-radius: 8px !important;
+    margin: 1.5rem 0 !important;
+}

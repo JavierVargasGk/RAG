@@ -13,7 +13,6 @@ def getTextFromPDF(filePath: str):
     for i, page in enumerate(doc):
         text = page.get_text("text") 
         if text:
-            # Clean NUL bytes and normalize weird ligatures (fi, fl, etc.)
             clean_text = text.replace('\x00', '').replace('\ufb01', 'fi').replace('\ufb02', 'fl')
             pages_data.append({"text": clean_text, "page": i + 1})
     doc.close()
@@ -75,22 +74,28 @@ def ingestPdf(filePath: str):
                 all_metadata.append({"file": filename, "page": page["page"]})
 
         all_vectors = []
-        SMALL_BATCH_SIZE = 15
-        print(f"Embedding {len(all_chunks)} chunks from {filename}...")
-
+        SMALL_BATCH_SIZE = 10 
+        print(f"Embedding {len(all_chunks)} chunks...")
         for i in range(0, len(all_chunks), SMALL_BATCH_SIZE):
             batch = all_chunks[i : i + SMALL_BATCH_SIZE]
-            try:
-                res = vo.embed(batch, model="voyage-finance-2", input_type="document")
-                all_vectors.extend(res.embeddings)
-                print(f"Progress: {i + len(batch)}/{len(all_chunks)} chunks...")
-                if i + SMALL_BATCH_SIZE < len(all_chunks):
-                    time.sleep(22)
-            except voyageai.error.RateLimitError:
-                print("Limit")
-                time.sleep(60)
-
-
+            retry_delay = 5
+            while True: 
+                try:
+                    res = vo.embed(batch, model="voyage-finance-2", input_type="document")
+                    all_vectors.extend(res.embeddings)
+                    print(f"Progress: {i + len(batch)}/{len(all_chunks)}")
+                    time.sleep(2) 
+                    break
+                except Exception as e:
+                    if "429" in str(e) or "limit" in str(e).lower():
+                        print(f"Rate limit alcanzado. Esperando {retry_delay}s")
+                        time.sleep(retry_delay)
+                        retry_delay *= 1.5
+                        if retry_delay > 120: 
+                             raise e
+                    else:
+                        print(f"Error inesperado: {e}")
+                        raise e
         with open(checkpoint_path, "wb") as f:
             pickle.dump({"chunks": all_chunks, "vectors": all_vectors, "metadata": all_metadata}, f)
 

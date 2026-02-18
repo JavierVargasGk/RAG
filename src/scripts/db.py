@@ -31,4 +31,23 @@ def get_connection_string():
     
     return f"postgresql://{creds['user']}:{creds['pass']}@{creds['host']}:{creds['port']}/{creds['name']}"
 
+def delete_file_from_db(filename: str):
+    conn_str = get_connection_string()
+    try:
+        with psycopg.connect(conn_str) as conn:
+            with conn.cursor() as cur:
+                cur.execute("SELECT COUNT(*) FROM doc_chunks WHERE filename = %s", (filename,))
+                count = cur.fetchone()[0]
+                
+                if count == 0:
+                    print(f"No se encontraron registros para el archivo: {filename}")
+                    return
+
+                cur.execute("DELETE FROM doc_chunks WHERE filename = %s", (filename,))
+                conn.commit()
+                print(f"Éxito: Se eliminaron {count} chunks del archivo '{filename}'.")
+                
+    except Exception as e:
+        print(f"Error al eliminar de la DB: {e}")
+
 

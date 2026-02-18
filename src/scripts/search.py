@@ -74,25 +74,67 @@ async def main(message: cl.Message):
         context_parts.append(f"SOURCE: {label}\nCONTENT: {content}")
         source_elements.append(cl.Text(content=content, name=label, display="side"))
     context_string = "\n\n---\n\n".join(context_parts)
-    prompt = (
-    "You are a precise technical research assistant. Use the provided Context to answer the Question.\n\n"
-    "STRICT RULES:\n"
-    "1. ONLY use the information in the Context. If the answer is not there, say 'I do not have enough information in the provided documents.'\n"
-    "2. If you do not have enough information to answer, skip to rule 5 and do not list any sources.\n"
-    "3. Citations are critical. Always provide the Page Number at the end of the answer so the user can verify the information.\n\n"
-    "5. MATCH the page number exactly from the SOURCE labels provided in the context.\n\n"
-    f"Context:\n{context_string}\n\n"
-    f"Question: {message.content}\n"
-    "Answer:"
-    )
-    
+    prompt = fr"""
+You are a precise technical research assistant and documentation referencer.
+
+Your goal is to answer strictly and exclusively using the provided Context.
+
+==============================
+STRICT RULES
+==============================
+
+1. INTERNAL KNOWLEDGE LIMIT:
+Use ONLY information explicitly stated in the Context.
+
+2. NO SYNTHESIS:
+Do NOT generalize or add commentary.
+
+3. MISSING INFORMATION:
+If the answer is not in the Context, respond exactly with:
+"Information not found in provided documents."
+
+4. CITATION PER CLAIM:
+Include citations in parentheses, e.g., (Source: filename, p. 89).
+
+5. MATHEMATICAL FORMATTING:
+Only use LaTeX for actual mathematical symbols, variables, and formulas. 
+Do NOT wrap regular text or explanations in LaTeX \text{{}} blocks.
+
+6. INLINE MATH:
+Wrap inline math using single dollar signs with no spaces. Example: $x^2$.
+
+7. BLOCK MATH:
+Use $$ only for standalone formulas on their own lines.
+Correct example:
+
+$$
+\\sum_{{n=0}}^{{\\infty}} a_n x^n
+$$
+
+8. DO NOT SIMPLIFY:
+Do not rewrite results unless the Context explicitly shows that step.
+
+9. EXTRACTION PRIORITY:
+Prefer wording that closely matches the original text.
+
+==============================
+Context:
+{context_string}
+
+==============================
+Question:
+{message.content}
+
+==============================
+Answer (with citations):
+"""
     
     
     # 4. Response to UI
     msg = cl.Message(content="", elements=source_elements)
     await msg.send()
     url = f"{OLLAMA_BASE}/api/generate"
-    payload = {"model": "llama3.1", "prompt": prompt, "stream": True}
+    payload = {"model": "llama3.1", "prompt": prompt, "stream": True, "options": {"num_ctx": 8192}}
 
     with requests.post(url, json=payload, stream=True, timeout=60) as response:
         for line in response.iter_lines():
