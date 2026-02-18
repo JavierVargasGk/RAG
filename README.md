@@ -26,7 +26,7 @@ To simulate production-grade resource management, the project is distributed acr
 
 * **Models:** Llama 3.1 (Inference), Cross-Encoders (Reranking), Voyage AI (Embeddings).
 * **Data Layer:** ParadeDB / PostgreSQL.
-* **Interface:** Chainlit (Customized with GitHub-Dark CSS & LaTeX support).
+* **Interface:** Chainlit (LaTeX formula support for maths).
 * **Tools:** Python 3.10, WSL2, Docker, Git.
 
 
@@ -34,4 +34,5 @@ To simulate production-grade resource management, the project is distributed acr
 * **Hardware Optimization:** Successfully offloaded compute-heavy tasks (Reranking/Inference) to local GPU hardware.
 * **Search Precision:** Improved retrieval accuracy by implementing a "Retrieve & Rerank" strategy rather than relying on raw vector similarity.
 * **Environment Management:** Configured cross-platform communication between Linux (WSL2) and Windows for high-performance AI workloads.
+
 
