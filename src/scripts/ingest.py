@@ -1,5 +1,6 @@
 from pypdf import PdfReader
 from db import get_connection_string, file_exists
+import time
 import voyageai
 import psycopg
 from dotenv import load_dotenv
@@ -63,14 +64,28 @@ def ingestPdf(filePath: str):
             all_metadata.append({"file": filename, "page": page["page"]})
 
     all_vectors = []
+    # I refuse to add my paymend info, limiting the batches and rate they embed so it doesnt nuke my free trial
+    SMALL_BATCH_SIZE = 10 
     print(f"Embedding {len(all_chunks)} chunks from {filename}...")
-    for batch in makeBatches(all_chunks):
-        res = vo.embed(
-            batch, 
-            model="voyage-finance-2", 
-            input_type="document"
-        )
-        all_vectors.extend(res.embeddings)
+
+    for i in range(0, len(all_chunks), SMALL_BATCH_SIZE):
+        batch = all_chunks[i : i + SMALL_BATCH_SIZE]
+        try:
+            res = vo.embed(
+                batch, 
+                model="voyage-finance-2", 
+                input_type="document"
+            )
+            all_vectors.extend(res.embeddings)
+            print(f"Progress: {i + len(batch)}/{len(all_chunks)} chunks...")
+
+            # 1 request every 20 seconds to avoid getting timed out
+            if i + SMALL_BATCH_SIZE < len(all_chunks):
+                time.sleep(22)
+                
+        except voyageai.error.RateLimitError:
+            print("Limit hit! Cooling down for 60 seconds...")
+            time.sleep(60)
 
     # 4. DB 
     conn_str = get_connection_string()

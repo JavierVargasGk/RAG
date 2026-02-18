@@ -1,3 +1,5 @@
+from email.mime import message
+from urllib import response
 from dotenv import load_dotenv
 import os
 import voyageai
@@ -5,6 +7,7 @@ from sentence_transformers import CrossEncoder
 import chainlit as cl
 import requests
 import subprocess
+import json
 import psycopg
 import sys
 from pathlib import Path
@@ -35,33 +38,68 @@ OLLAMA_BASE = get_ollama_endpoint()
 
 reranker = CrossEncoder("cross-encoder/ms-marco-MiniLM-L-6-v2",device="cuda")
 
-
 @cl.on_message
 async def main(message: cl.Message):
-    #Vector and Query
+    #Search
     res = vo.embed([message.content], model="voyage-finance-2")
     query_vector = res.embeddings[0]
+    
     connect_string = get_connection_string()
     with psycopg.connect(connect_string) as conn:
         with conn.cursor() as cur:
-            cur.execute("SELECT content FROM doc_chunks ORDER BY embedding <=> %s::vector LIMIT 10", (query_vector,))
-            candidates = [row[0] for row in cur.fetchall()]
+            cur.execute("""
+                SELECT content, filename, page_number 
+                FROM doc_chunks 
+                ORDER BY embedding <=> %s::vector 
+                LIMIT 10
+            """, (query_vector,))
+            candidates = cur.fetchall()
             
     if not candidates:
         await cl.Message(content="No relevant documents found.").send()
         return
     
-    #Reranking
-    pairs = [[message.content, candidate] for candidate in candidates]
+    # 2. Reranking 
+    pairs = [[message.content, row[0]] for row in candidates]
     scores = reranker.predict(pairs)
-    ranked_candidates = [candidate for _, candidate in sorted(zip(scores, candidates), reverse=True)]
+    ranked_results = [row for _, row in sorted(zip(scores, candidates), key=lambda x: x[0], reverse=True)]
     
-    #Ollama
-    context = "\n---\n".join(ranked_candidates)
-    prompt = f"Context: {context}\n\nQuestion: {message.content}\nAnswer:"
-    response = requests.post(f"{OLLAMA_BASE}/api/generate", json={"model": "llama3.1", "prompt": prompt, "stream": False},timeout=30)
+    context_parts = []
+    source_elements = []
+    
+    # Context
+    for i, (content, filename, page) in enumerate(ranked_results[:5]):
+
+        label = f"Ref_{i+1}_{filename}_p{page}"
+        context_parts.append(f"SOURCE: {label}\nCONTENT: {content}")
+        source_elements.append(cl.Text(content=content, name=label, display="side"))
+    context_string = "\n\n---\n\n".join(context_parts)
+    prompt = (
+    "You are a precise technical research assistant. Use the provided Context to answer the Question.\n\n"
+    "STRICT RULES:\n"
+    "1. ONLY use the information in the Context. If the answer is not there, say 'I do not have enough information in the provided documents.'\n"
+    "2. If you do not have enough information to answer, skip to rule 5 and do not list any sources.\n"
+    "3. Citations are critical. Always provide the Page Number at the end of the answer so the user can verify the information.\n\n"
+    "5. MATCH the page number exactly from the SOURCE labels provided in the context.\n\n"
+    f"Context:\n{context_string}\n\n"
+    f"Question: {message.content}\n"
+    "Answer:"
+    )
     
     
     
-    await cl.Message(content=response.json()['response']).send()
+    # 4. Response to UI
+    msg = cl.Message(content="", elements=source_elements)
+    await msg.send()
+    url = f"{OLLAMA_BASE}/api/generate"
+    payload = {"model": "llama3.1", "prompt": prompt, "stream": True}
+
+    with requests.post(url, json=payload, stream=True, timeout=60) as response:
+        for line in response.iter_lines():
+            if line:
+                chunk = json.loads(line.decode('utf-8'))
+                if not chunk.get("done"):
+                    token = chunk.get('response', '')
+                    await msg.stream_token(token)
     
+    await msg.update()
