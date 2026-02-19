@@ -48,11 +48,14 @@ async def main(message: cl.Message):
     with psycopg.connect(connect_string) as conn:
         with conn.cursor() as cur:
             cur.execute("""
-                SELECT content, filename, page_number 
+                SELECT content, filename, page_number, 
+                    paradedb.score(id) as search_score
                 FROM doc_chunks 
-                ORDER BY embedding <=> %s::vector 
+                WHERE content @@@ %s  -- BM25 Keyword Search
+                OR embedding <=> %s < 0.5 -- Vector Search
+                ORDER BY search_score DESC
                 LIMIT 10
-            """, (query_vector,))
+            """, (message.content, query_vector))
             candidates = cur.fetchall()
             
     if not candidates:
