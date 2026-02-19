@@ -36,7 +36,7 @@ def get_ollama_endpoint():
 OLLAMA_BASE = get_ollama_endpoint()
 
 
-reranker = CrossEncoder("cross-encoder/ms-marco-MiniLM-L-6-v2",device="cuda")
+reranker = CrossEncoder("cross-encoder/ms-marco-MiniLM-L-6-v2", device="cuda")
 
 @cl.on_message
 async def main(message: cl.Message):
@@ -48,14 +48,14 @@ async def main(message: cl.Message):
     with psycopg.connect(connect_string) as conn:
         with conn.cursor() as cur:
             cur.execute("""
-                SELECT content, filename, page_number, 
-                    paradedb.score(id) as search_score
-                FROM doc_chunks 
-                WHERE content @@@ %s  -- BM25 Keyword Search
-                OR embedding <=> %s < 0.5 -- Vector Search
-                ORDER BY search_score DESC
-                LIMIT 10
-            """, (message.content, query_vector))
+        SELECT content, filename, page_number, 
+            (paradedb.score(id) + (1.0 - (embedding <=> %s))) as combined_score
+        FROM doc_chunks 
+        WHERE content @@@ %s  -- BM25
+        OR embedding <=> %s < 0.5 -- Vector
+        ORDER BY combined_score DESC
+        LIMIT 20 -- Increase limit so Reranker has more to work with
+    """, (query_vector, message.content, query_vector))
             candidates = cur.fetchall()
             
     if not candidates:
