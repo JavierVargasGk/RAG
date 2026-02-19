@@ -11,6 +11,7 @@ import json
 import psycopg
 import sys
 from pathlib import Path
+from voyageai.error import RateLimitError
 
 root_path = Path(__file__).resolve().parents[2] 
 if str(root_path) not in sys.path:
@@ -41,9 +42,24 @@ reranker = CrossEncoder("cross-encoder/ms-marco-MiniLM-L-6-v2", device="cuda")
 @cl.on_message
 async def main(message: cl.Message):
     #Search
-    res = vo.embed([message.content], model="voyage-finance-2")
-    query_vector = res.embeddings[0]
-    
+    max_retries = 3
+    query_vector = None
+    for attempt in range(max_retries):
+        try:
+            res = vo.embed([message.content], model="voyage-finance-2")
+            query_vector = res.embeddings[0]
+            break # Exit loop if successful
+        except Exception as e:
+            if "rate_limit" in str(e).lower() and attempt < max_retries - 1:
+                wait_time = 2 ** (attempt + 1) 
+                await cl.Message(content=f"Voyage API rate limit hit. Retrying in {wait_time}s...").send()
+                import time
+                time.sleep(wait_time)
+            else:
+                await cl.Message(content="Error: Voyage AI rate limit exceeded. Please wait a minute before trying again.").send()
+                return
+            
+            
     connect_string = get_connection_string()
     with psycopg.connect(connect_string) as conn:
         with conn.cursor() as cur:
