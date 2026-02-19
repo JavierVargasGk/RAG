@@ -48,14 +48,14 @@ async def main(message: cl.Message):
     with psycopg.connect(connect_string) as conn:
         with conn.cursor() as cur:
             cur.execute("""
-        SELECT content, filename, page_number, 
-            (paradedb.score(id) + (1.0 - (embedding <=> %s))) as combined_score
-        FROM doc_chunks 
-        WHERE content @@@ %s  -- BM25
-        OR embedding <=> %s < 0.5 -- Vector
-        ORDER BY combined_score DESC
-        LIMIT 20 -- Increase limit so Reranker has more to work with
-    """, (query_vector, message.content, query_vector))
+                SELECT content, filename, page_number, 
+                    (paradedb.score(id) + (1.0 - (embedding <=> %s::vector))) as combined_score
+                FROM doc_chunks 
+                WHERE content @@@ %s  -- BM25 Keyword Search
+                OR embedding <=> %s::vector < 0.5 -- Vector Search
+                ORDER BY combined_score DESC
+                LIMIT 20
+        """, (query_vector, message.content, query_vector))
             candidates = cur.fetchall()
             
     if not candidates:
@@ -71,7 +71,7 @@ async def main(message: cl.Message):
     source_elements = []
     
     # Context
-    for i, (content, filename, page) in enumerate(ranked_results[:5]):
+    for i, (content, filename, page, score) in enumerate(ranked_results[:5]):
 
         label = f"Ref_{i+1}_{filename}_p{page}"
         context_parts.append(f"SOURCE: {label}\nCONTENT: {content}")
@@ -117,8 +117,11 @@ $$
 8. DO NOT SIMPLIFY:
 Do not rewrite results unless the Context explicitly shows that step.
 
-9. EXTRACTION PRIORITY:
-Prefer wording that closely matches the original text.
+9. NO DOUBLE FORMATTING:
+Output math ONLY in LaTeX format. Do not provide a "plain text" or "simplified" version of the equation immediately after the LaTeX block.
+
+10. NO REPETITION: 
+Do not provide a text-based or "simplified" version of a mathematical formula after providing the LaTeX version. Provide the LaTeX version ONLY.
 
 ==============================
 Context:
