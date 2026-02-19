@@ -1,0 +1,21 @@
+services:
+  db:
+    image: paradedb/paradedb:latest
+    container_name: paradedb-managed
+    restart: unless-stopped
+    environment:
+      - POSTGRES_USER=${DB_USER}
+      - POSTGRES_PASSWORD=${DB_PASSWORD}
+      - POSTGRES_DB=${DB_NAME}
+    ports:
+      - "5432:5432"
+    volumes:
+      - rag_data:/var/lib/postgresql
+
+volumes:
+  rag_data:
+    external: true
+    name: b3ff9c2342a2eb3aa26279079a8e35ec2ce3b88cd742bc4232d2ddd53a289ff3
+
+
+    

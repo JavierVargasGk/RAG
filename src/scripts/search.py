@@ -10,6 +10,7 @@ import subprocess
 import json
 import psycopg
 import sys
+import time
 from pathlib import Path
 from voyageai.error import RateLimitError
 
@@ -48,13 +49,12 @@ async def main(message: cl.Message):
         try:
             res = vo.embed([message.content], model="voyage-finance-2")
             query_vector = res.embeddings[0]
-            break # Exit loop if successful
+            break 
         except Exception as e:
             if "rate_limit" in str(e).lower() and attempt < max_retries - 1:
                 wait_time = 2 ** (attempt + 1) 
                 await cl.Message(content=f"Voyage API rate limit hit. Retrying in {wait_time}s...").send()
-                import time
-                time.sleep(wait_time)
+                await cl.sleep(wait_time)
             else:
                 await cl.Message(content="Error: Voyage AI rate limit exceeded. Please wait a minute before trying again.").send()
                 return
