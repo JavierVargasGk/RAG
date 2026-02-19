@@ -4,20 +4,20 @@ This project is a hands-on exploration of **Retrieval-Augmented Generation (RAG)
 
 ## Technical Architecture
 
-The system implements a RAG pipeline optimized for accuracy and contextual relevance:
+The system implements a production-grade RAG pipeline focused on high-precision retrieval:
 
-1.  **Ingestion & Embedding:** Documents are vectorized using **Voyage AI** and indexed in a **ParadeDB (PostgreSQL)** database.
-2.  **Hybrid Retrieval:** The system retrieves the top 10 most similar chunks based on semantic similarity.
-3.  **Local GPU Reranking:** To eliminate noise, a **Cross-Encoder** model runs locally. It re-evaluates the initial 10 chunks to isolate the top 5 most relevant segments.
-4.  **Inference:** The filtered context is fed to **Ollama (Llama 3.1)** to generate a grounded, hallucination-free response.
+1. **Ingestion & Embedding:** Automated ETL pipeline using **Voyage-Finance-2** (specialized for technical data) with vector indexing in **ParadeDB**.
+2. **Hybrid Retrieval:** Executes a fused search query (BM25 + Vector Similarity) to capture both keyword exact-matches and semantic context.
+3. **Local GPU Reranking:** Implements a **Cross-Encoder (ms-marco-MiniLM)** pass on the top 10 candidates to mitigate retrieval "noise" and ensure only the top 5 highly-relevant chunks reach the LLM.
+4. **Grounded Inference:** Context-window grounding via **Llama 3.1**, enforced with strict system prompts to prevent hallucinations and ensure source-backed responses.
 
+## Hybrid Infrastructure & Networking
 
+To maximize local hardware while maintaining a Linux-native environment:
+* **Linux (WSL2):** Hosts the application logic, **Dockerized ParadeDB**, and the persistence layer.
+* **Windows Host:** Serves as the high-performance compute node, hosting **Ollama** and bridging GPU access for the **RTX 4060**.
+* **Remote Management:** Developed using a **Headless Server workflow** via **SSH** and **Tailscale**, allowing for full development and monitoring from a remote client.
 
-## Distributed Setup (Hybrid Infrastructure)
-
-* **WSL2 (Linux Subsystem):** Orchestrates the Python logic, the **Chainlit UI**, and the **ParadeDB** instance.
-* **Windows Host:** Manages **Ollama** and GPU drivers, providing the models with direct access to **RTX 4060 VRAM** for low-latency inference.
-* **Remote Development:** Managed via **VS Code Remote-SSH** from a MacBook, simulating a remote server management workflow.
 
 
 ## Tech Stack
