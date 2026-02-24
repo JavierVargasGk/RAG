@@ -1,18 +1,26 @@
-# ALBERT
+## ALBERT 
+ RAG with Hybrid Search & Local GPU Reranking**
 
-This project is a hands-on exploration of **Retrieval-Augmented Generation (RAG)**
+## Quick Start
+1. **Clone the Repo:** `git clone https://github.com/JavierVargasGk/RAG`
+2. **Infrastructure:** Start the docker container that holds the database (ParadeDB): `docker-compose up -d`
+3. **Inference Engine:** Install and run **Ollama** on your host machine:
+   ```powershell
+   # Windows (PowerShell)
+   irm [https://ollama.com/install.ps1](https://ollama.com/install.ps1) | iex
+   
+## Future TODO
+* **Web based ingestion**: I want the RAG to be able to ingest files inside of the browser GUI
+* **Web scraping for library/framework documentations**: Few are the libraries that have their entire framework/library docs on a PDF, so adding this is a priority if this is meant to be used as a coding helper
 
 ## Technical Architecture
-
 The system implements a production-grade RAG pipeline focused on high-precision retrieval:
-
-1. **Ingestion & Embedding:** Automated ETL pipeline using **Voyage-Finance-2** (specialized for technical data) with vector indexing in **ParadeDB**.
+1. **Ingestion & Embedding:** Automated ETL pipeline using **Voyage** (specialized for technical data) with vector indexing in **ParadeDB**.
 2. **Hybrid Retrieval:** Executes a fused search query (BM25 + Vector Similarity) to capture both keyword exact-matches and semantic context.
 3. **Local GPU Reranking:** Implements a **Cross-Encoder (ms-marco-MiniLM)** pass on the top 10 candidates to mitigate retrieval "noise" and ensure only the top 5 highly-relevant chunks reach the LLM.
 4. **Grounded Inference:** Context-window grounding via **Llama 3.1**, enforced with strict system prompts to prevent hallucinations and ensure source-backed responses.
 
 ## Hybrid Infrastructure & Networking
-
 To maximize local hardware while maintaining a Linux-native environment:
 * **Linux (WSL2):** Hosts the application logic, **Dockerized ParadeDB**, and the persistence layer.
 * **Windows Host:** Serves as the high-performance compute node, hosting **Ollama** and bridging GPU access for the **RTX 4060**.
@@ -21,7 +29,6 @@ To maximize local hardware while maintaining a Linux-native environment:
 
 
 ## Tech Stack
-
 * **Models:** Llama 3.1 (Inference), Cross-Encoders (Reranking), Voyage AI (Embeddings).
 * **Data Layer:** ParadeDB / PostgreSQL.
 * **Interface:** Chainlit (LaTeX formula support for maths).
@@ -32,6 +39,7 @@ To maximize local hardware while maintaining a Linux-native environment:
 * **Hardware Optimization:** Successfully offloaded compute-heavy tasks (Reranking/Inference) to local GPU hardware.
 * **Search Precision:** Improved retrieval accuracy by implementing a "Retrieve & Rerank" strategy rather than relying on raw vector similarity.
 * **Environment Management:** Configured cross-platform communication between Linux (WSL2) and Windows for high-performance AI workloads.
+
 
 
 
