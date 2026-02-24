@@ -75,12 +75,12 @@ vo = voyageai.Client(os.getenv("VOYAGE_API"))
 
 def ingestPdf(filePath: str):
     filename = os.path.basename(filePath)
-    checkpoint_path = f"data/checkpoints/checkpoint_{filename}.pkl" # 
     if (file_exists(filename)):
         logger.info(f"Skipping {filename}: Already exists.")
         return
     # i hate everything, 90k tokens gone
     #This opens a pkl file, loading all the data if it exists so we dont have to embed it again from 0 but instead keep it there
+    checkpoint_path = f"data/checkpoints/checkpoint_{filename}.pkl" # 
     if os.path.exists(checkpoint_path):
         with open(checkpoint_path, "rb") as f:
             data = pickle.load(f)
@@ -148,9 +148,6 @@ def ingestPdf(filePath: str):
                         copy.write_row((chunk, vector_str, meta["file"], meta["page"]))
                         
         logger.info(f"Successfully ingested {len(all_chunks)} chunks.")
-        if os.path.exists(checkpoint_path):
-            os.remove(checkpoint_path)
-            
     except Exception as e:
         logger.error(f"DB Error: {e}")
         
