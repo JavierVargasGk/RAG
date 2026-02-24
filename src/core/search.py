@@ -1,5 +1,4 @@
-from email.mime import message
-from urllib import response
+
 from dotenv import load_dotenv
 import os
 import voyageai
@@ -11,16 +10,16 @@ import json
 import psycopg
 import logging
 from pathlib import Path
-from voyageai.error import RateLimitError
-from src.core.db import get_connection_string
+from core.db import get_connection_string, embed_text
 
+logger = logging.getLogger(__name__)
 load_dotenv()
 vo = voyageai.Client(os.getenv("VOYAGE_API"))
 
 def get_ollama_endpoint():
     try:
         window_ip = subprocess.check_output("ip route | grep default | awk '{print $3}'", shell=True).decode().strip()
-        logging.info(f"Detected Windows Host IP: {window_ip}")
+        logger.info(f"Detected Windows Host IP: {window_ip}")
         test_url = f"http://{window_ip}:11434/api/tags"
         requests.get(test_url, timeout=1)
         return f"http://{window_ip}:11434"
@@ -34,38 +33,27 @@ reranker = CrossEncoder("cross-encoder/ms-marco-MiniLM-L-6-v2", device="cuda")
 
 @cl.on_message
 async def main(message: cl.Message):
-    #Search
-    max_retries = 3
-    query_vector = None
-    for attempt in range(max_retries):
-        try:
-            res = vo.embed([message.content], model="voyage-finance-2")
-            query_vector = res.embeddings[0]
-            break 
-        except Exception as e:
-            if "rate_limit" in str(e).lower() and attempt < max_retries - 1:
-                wait_time = 2 ** (attempt + 1) 
-                await cl.Message(content=f"Voyage API rate limit hit. Retrying in {wait_time}s...").send()
-                await cl.sleep(wait_time)
-            else:
-                await cl.Message(content="Error: Voyage AI rate limit exceeded. Please wait a minute before trying again.").send()
-                return
+    try:
+        query_vectors = embed_text([message.content], is_query=True)
+        query_vector = query_vectors[0]
+    except Exception as e:
+        logger.error(f"Search failed at embedding stage: {e}")
+        await cl.Message(content="Error: Could not process query. Please try again.").send()
+        return
             
-            
-    connect_string = get_connection_string()
-    with psycopg.connect(connect_string) as conn:
+    conn_str = get_connection_string()
+    with psycopg.connect(conn_str) as conn:
         with conn.cursor() as cur:
             cur.execute("""
                 SELECT content, filename, page_number, 
                     (paradedb.score(id) + (1.0 - (embedding <=> %s::vector))) as combined_score
                 FROM doc_chunks 
-                WHERE content @@@ %s  -- BM25 Keyword Search
-                OR embedding <=> %s::vector < 0.5 -- Vector Search
+                WHERE content @@@ %s  
+                OR embedding <=> %s::vector < 0.5 
                 ORDER BY combined_score DESC
                 LIMIT 20
-        """, (query_vector, message.content, query_vector))
+            """, (query_vector, message.content, query_vector))
             candidates = cur.fetchall()
-            
     if not candidates:
         await cl.Message(content="No relevant documents found.").send()
         return

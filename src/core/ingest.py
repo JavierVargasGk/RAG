@@ -1,5 +1,5 @@
 import fitz
-from src.core.db import get_connection_string, file_exists
+from core.db import get_connection_string, file_exists, embed_text
 import time
 import logging
 import voyageai
@@ -8,30 +8,51 @@ from dotenv import load_dotenv
 import pickle
 import os
 
+
+logger = logging.getLogger(__name__)
+
 def getTextFromPDF(filePath: str):
     doc = fitz.open(filePath)
     pages_data = []
+    logger.info(f"Parsing {os.path.basename(filePath)} with Markdown-aware logic.")
+    
     for i, page in enumerate(doc):
-        text = page.get_text("text") 
-        if text:
-            clean_text = text.replace('\x00', '').replace('\ufb01', 'fi').replace('\ufb02', 'fl')
-            pages_data.append({"text": clean_text, "page": i + 1})
+        blocks = page.get_text("dict")["blocks"]
+        md_text = ""
+        for b in blocks:
+            if "lines" not in b: continue
+            for line in b["lines"]:
+                for span in line["spans"]:
+                    text = span["text"].strip()
+                    if not text: continue
+                    size = span["size"]
+                    if size > 14:
+                        md_text += f"\n# {text}\n"
+                    elif 12 < size <= 14:
+                        md_text += f"\n## {text}\n"
+                    elif span["flags"] & 2**4:
+                        md_text += f" **{text}** "
+                    else:
+                        md_text += f" {text} "
+        clean_text = md_text.replace('\x00', '').replace('\ufb01', 'fi').replace('\ufb02', 'fl')
+        pages_data.append({"text": clean_text, "page": i + 1})
+        
     doc.close()
     return pages_data
 
 #Split data into chunks of 1000 characters with an overlap of 200 characters (or changed if needed)
 def getChunks(data: str,chunkSize: int = 1000, overlap: int=200):
     if(data == ""):
-        logging.warning("Empty data received for chunking.")
+        logger.warning("Empty data received for chunking.")
         raise ValueError("Data cannot be empty.")
     if(chunkSize <= 0):
-        logging.error(f"Invalid chunk size: {chunkSize}. Must be greater than 0.")
+        logger.error(f"Invalid chunk size: {chunkSize}. Must be greater than 0.")
         raise ValueError("Chunk size must be greater than 0.")
     if(overlap < 0):
-        logging.error(f"Invalid overlap: {overlap}. Must be non-negative.")
+        logger.error(f"Invalid overlap: {overlap}. Must be non-negative.")
         raise ValueError("Overlap must be non-negative.")
     if(overlap >= chunkSize):
-        logging.error(f"Invalid overlap: {overlap}. Must be less than chunk size: {chunkSize}.")
+        logger.error(f"Invalid overlap: {overlap}. Must be less than chunk size: {chunkSize}.")
         raise ValueError("Overlap must be less than chunk size.")
     chunks = []
     for i in range(0, len(data), chunkSize - overlap):
@@ -58,7 +79,7 @@ def ingestPdf(filePath: str):
     filename = os.path.basename(filePath)
     checkpoint_path = f"checkpoint_{filename}.pkl" # 
     if (file_exists(filename)):
-        logging.info(f"Skipping {filename}: Already exists.")
+        logger.info(f"Skipping {filename}: Already exists.")
         return
     # i hate everything, 90k tokens gone
     if os.path.exists(checkpoint_path):
@@ -80,26 +101,25 @@ def ingestPdf(filePath: str):
 
         all_vectors = []
         SMALL_BATCH_SIZE = 10 
-        logging.info(f"Embedding {len(all_chunks)} chunks...")
+        logger.info(f"Embedding {len(all_chunks)} chunks...")
         for i in range(0, len(all_chunks), SMALL_BATCH_SIZE):
             batch = all_chunks[i : i + SMALL_BATCH_SIZE]
             retry_delay = 5
             while True: 
                 try:
-                    res = vo.embed(batch, model="voyage-finance-2", input_type="document")
-                    all_vectors.extend(res.embeddings)
-                    logging.info(f"Progress: {i + len(batch)}/{len(all_chunks)}")
-                    time.sleep(2) 
+                    embeddings = embed_text(batch, is_query=False)
+                    all_vectors.extend(embeddings)
+                    logger.info(f"Progress: {i + len(batch)}/{len(all_chunks)}")
+                    time.sleep(1) 
                     break
                 except Exception as e:
                     if "429" in str(e) or "limit" in str(e).lower():
-                        logging.warning(f"Rate limit alcanzado. Esperando {retry_delay}s")
+                        logger.warning(f"Rate limit reached. Retrying in {retry_delay}s")
                         time.sleep(retry_delay)
                         retry_delay *= 1.5
-                        if retry_delay > 120: 
-                             raise e
+                        if retry_delay > 120: raise e
                     else:
-                        logging.error(f"Error inesperado: {e}")
+                        logger.error(f"Unexpected error: {e}")
                         raise e
         with open(checkpoint_path, "wb") as f:
             pickle.dump({"chunks": all_chunks, "vectors": all_vectors, "metadata": all_metadata}, f)
@@ -115,14 +135,14 @@ def ingestPdf(filePath: str):
                         vector_str = "[" + ",".join(map(str, vector)) + "]"
                         copy.write_row((chunk, vector_str, meta["file"], meta["page"]))
                         
-        logging.info(f"Successfully ingested {len(all_chunks)} chunks.")
+        logger.info(f"Successfully ingested {len(all_chunks)} chunks.")
         if os.path.exists(checkpoint_path):
             os.remove(checkpoint_path)
             
     except Exception as e:
-        print(f"Error en DB: {e}.")
+        logger.error(f"DB Error: {e}")
         
-def run():
+def run_ingest():
     if not os.path.exists("data"):
         os.makedirs("data")
     else:
@@ -134,5 +154,3 @@ def run():
                 path = os.path.join("data", file)
                 ingestPdf(path)        
   
-if __name__ == "__main__":
-    run()
