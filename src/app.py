@@ -1,4 +1,8 @@
 import logging
+from core.ingest import run_ingest
+from chainlit.cli import run_chainlit
+import time
+import os
 
 logging.basicConfig(
     level=logging.INFO,
@@ -11,9 +15,6 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-from core.ingest import run_ingest
-from chainlit.cli import run_chainlit
-import os
 
 if __name__ == "__main__":
     logger.info("Starting the RAG Ingestion process...")
