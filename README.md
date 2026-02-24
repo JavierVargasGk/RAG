@@ -1,5 +1,5 @@
 # ALBERT 
-RAG with Hybrid Search & Local GPU Reranking**
+**RAG with Hybrid Search & Local GPU Reranking**
 
 ## Quick Start
 1. **Clone the Repo:** `git clone https://github.com/JavierVargasGk/RAG`
@@ -41,6 +41,7 @@ To maximize local hardware while maintaining a Linux-native environment:
 * **Hardware Optimization:** Successfully offloaded compute-heavy tasks (Reranking/Inference) to local GPU hardware.
 * **Search Precision:** Improved retrieval accuracy by implementing a "Retrieve & Rerank" strategy rather than relying on raw vector similarity.
 * **Environment Management:** Configured cross-platform communication between Linux (WSL2) and Windows for high-performance AI workloads.
+
 
 
 
