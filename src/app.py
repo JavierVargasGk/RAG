@@ -1,4 +1,5 @@
 import logging
+
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s [%(name)s] %(levelname)s: %(message)s',
@@ -13,7 +14,10 @@ logger = logging.getLogger(__name__)
 from core.ingest import run_ingest
 from chainlit.cli import run_chainlit
 import os
+<<<<<<< HEAD
 
+=======
+>>>>>>> 0ee42a0 (checkpointing works better now, implemented dynamic api calls to avoid hitting rate limit, it works as efficiently as the embed api allows it to)
 
 if __name__ == "__main__":
     logger.info("Starting the RAG Ingestion process...")
