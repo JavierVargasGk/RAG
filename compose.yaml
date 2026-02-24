@@ -11,7 +11,7 @@ services:
       - "5432:5432"
     volumes:
       - rag_data:/var/lib/postgresql
-      - ./src/scripts/init.sql:/docker-entrypoint-initdb.d/init.sql
+      - ./database/init.sql:/docker-entrypoint-initdb.d/init.sql
 
 volumes:
   rag_data:

@@ -1,6 +1,7 @@
 from dotenv import load_dotenv
 import psycopg
 import os
+import logging
 import sys
 
 load_dotenv()
@@ -15,7 +16,7 @@ def file_exists(filename: str) -> bool:
                 )
                 return cur.fetchone()[0] 
     except Exception as e:
-        print(f"Database error while checking file: {e}")
+        logging.error(f"Database error while checking file: {e}")
         return False
     
 def get_connection_string():
@@ -40,14 +41,15 @@ def delete_file_from_db(filename: str):
                 count = cur.fetchone()[0]
                 
                 if count == 0:
-                    print(f"No se encontraron registros para el archivo: {filename}")
+                    logging.warning(f"No se encontraron registros para el archivo: {filename}")
                     return
 
                 cur.execute("DELETE FROM doc_chunks WHERE filename = %s", (filename,))
                 conn.commit()
-                print(f"Éxito: Se eliminaron {count} chunks del archivo '{filename}'.")
+                logging.info(f"Éxito: Se eliminaron {count} chunks del archivo '{filename}'.")
                 
     except Exception as e:
-        print(f"Error al eliminar de la DB: {e}")
+        logging.error(f"Error al eliminar de la DB: {e}")
+
 
 

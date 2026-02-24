@@ -9,26 +9,18 @@ import requests
 import subprocess
 import json
 import psycopg
-import sys
-import time
+import logging
 from pathlib import Path
 from voyageai.error import RateLimitError
+from src.core.db import get_connection_string
 
-root_path = Path(__file__).resolve().parents[2] 
-if str(root_path) not in sys.path:
-    sys.path.insert(0, str(root_path))
-try:
-    from db import get_connection_string
-except ImportError as e:
-    sys.exit(1)
-    
 load_dotenv()
 vo = voyageai.Client(os.getenv("VOYAGE_API"))
 
 def get_ollama_endpoint():
     try:
         window_ip = subprocess.check_output("ip route | grep default | awk '{print $3}'", shell=True).decode().strip()
-        print(f"Detected Windows Host IP: {window_ip}")
+        logging.info(f"Detected Windows Host IP: {window_ip}")
         test_url = f"http://{window_ip}:11434/api/tags"
         requests.get(test_url, timeout=1)
         return f"http://{window_ip}:11434"

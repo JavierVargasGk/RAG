@@ -1,6 +1,7 @@
 import fitz
-from db import get_connection_string, file_exists
+from src.core.db import get_connection_string, file_exists
 import time
+import logging
 import voyageai
 import psycopg
 from dotenv import load_dotenv
@@ -21,12 +22,16 @@ def getTextFromPDF(filePath: str):
 #Split data into chunks of 1000 characters with an overlap of 200 characters (or changed if needed)
 def getChunks(data: str,chunkSize: int = 1000, overlap: int=200):
     if(data == ""):
+        logging.warning("Empty data received for chunking.")
         raise ValueError("Data cannot be empty.")
     if(chunkSize <= 0):
+        logging.error(f"Invalid chunk size: {chunkSize}. Must be greater than 0.")
         raise ValueError("Chunk size must be greater than 0.")
     if(overlap < 0):
+        logging.error(f"Invalid overlap: {overlap}. Must be non-negative.")
         raise ValueError("Overlap must be non-negative.")
     if(overlap >= chunkSize):
+        logging.error(f"Invalid overlap: {overlap}. Must be less than chunk size: {chunkSize}.")
         raise ValueError("Overlap must be less than chunk size.")
     chunks = []
     for i in range(0, len(data), chunkSize - overlap):
@@ -53,7 +58,7 @@ def ingestPdf(filePath: str):
     filename = os.path.basename(filePath)
     checkpoint_path = f"checkpoint_{filename}.pkl" # 
     if (file_exists(filename)):
-        print(f"Skipping {filename}: Already exists.")
+        logging.info(f"Skipping {filename}: Already exists.")
         return
     # i hate everything, 90k tokens gone
     if os.path.exists(checkpoint_path):
@@ -75,7 +80,7 @@ def ingestPdf(filePath: str):
 
         all_vectors = []
         SMALL_BATCH_SIZE = 10 
-        print(f"Embedding {len(all_chunks)} chunks...")
+        logging.info(f"Embedding {len(all_chunks)} chunks...")
         for i in range(0, len(all_chunks), SMALL_BATCH_SIZE):
             batch = all_chunks[i : i + SMALL_BATCH_SIZE]
             retry_delay = 5
@@ -83,18 +88,18 @@ def ingestPdf(filePath: str):
                 try:
                     res = vo.embed(batch, model="voyage-finance-2", input_type="document")
                     all_vectors.extend(res.embeddings)
-                    print(f"Progress: {i + len(batch)}/{len(all_chunks)}")
+                    logging.info(f"Progress: {i + len(batch)}/{len(all_chunks)}")
                     time.sleep(2) 
                     break
                 except Exception as e:
                     if "429" in str(e) or "limit" in str(e).lower():
-                        print(f"Rate limit alcanzado. Esperando {retry_delay}s")
+                        logging.warning(f"Rate limit alcanzado. Esperando {retry_delay}s")
                         time.sleep(retry_delay)
                         retry_delay *= 1.5
                         if retry_delay > 120: 
                              raise e
                     else:
-                        print(f"Error inesperado: {e}")
+                        logging.error(f"Error inesperado: {e}")
                         raise e
         with open(checkpoint_path, "wb") as f:
             pickle.dump({"chunks": all_chunks, "vectors": all_vectors, "metadata": all_metadata}, f)
@@ -107,20 +112,17 @@ def ingestPdf(filePath: str):
                 sql = "COPY doc_chunks (content, embedding, filename, page_number) FROM STDIN"
                 with cur.copy(sql) as copy:
                     for chunk, vector, meta in zip(all_chunks, all_vectors, all_metadata):
-                        clean_chunk = chunk.replace('\x00', '')
                         vector_str = "[" + ",".join(map(str, vector)) + "]"
-                        copy.write_row((clean_chunk, vector_str, meta["file"], meta["page"]))
+                        copy.write_row((chunk, vector_str, meta["file"], meta["page"]))
                         
-        print(f"Successfully ingested {len(all_chunks)} chunks.")
+        logging.info(f"Successfully ingested {len(all_chunks)} chunks.")
         if os.path.exists(checkpoint_path):
             os.remove(checkpoint_path)
             
     except Exception as e:
         print(f"Error en DB: {e}.")
         
-        
-        
-if __name__ == "__main__":
+def run():
     if not os.path.exists("data"):
         os.makedirs("data")
     else:
@@ -130,4 +132,7 @@ if __name__ == "__main__":
         else:
             for file in files:
                 path = os.path.join("data", file)
-                ingestPdf(path)
+                ingestPdf(path)        
+  
+if __name__ == "__main__":
+    run()
