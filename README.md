@@ -8,13 +8,15 @@ RAG with Hybrid Search & Local GPU Reranking**
    ```powershell
    # Windows (PowerShell)
    irm [https://ollama.com/install.ps1](https://ollama.com/install.ps1) | iex
-4. Now you can add whatever files you want the RAG to work with into your `data/` folder, and run the `ingest.py` script inside scripts.
-5. Finally you just run the main script `app.py` and it should auto open very own RAG.
+4. create and open the venv using `python -m venv venv` then activate with `.\venv\Scripts\activate`(Windows) or `source /venv/bin/activate`(Mac/Linux)
+5. Install dependencies with `pip install -r requirements.txt`
+6. Now you can add whatever files you want the RAG to work with into your `data/` folder.
+7. Finally you just run the main script `app.py` and once its done ingesting the data you uploded (can take a while if your data is too big), it should auto open your very own RAG.
    
 ## Future TODO
 * **Prettier front-end**: GUI is a work in progress.
 * **Web based ingestion**: I want the RAG to be able to ingest files inside of the browser GUI.
-* **Web scraping for library/framework documentations**: Few are the libraries that have their entire framework/library docs on a PDF, so adding this is a priority if this is meant to be used as a coding helper.
+* **Better ingesting for library/framework documentations**: Few are the libraries that have their entire framework/library docs on a PDF, so adding this is a priority if this is meant to be used as a coding helper.
 
 ## Project Architecture
 The system implements a production-grade RAG pipeline focused on high-precision retrieval:
@@ -33,7 +35,7 @@ To maximize local hardware while maintaining a Linux-native environment:
 * **Models:** Llama 3.1 (Inference), Cross-Encoders (Reranking), Voyage AI (Embeddings).
 * **Data Layer:** ParadeDB / PostgreSQL.
 * **Interface:** Chainlit (LaTeX formula support for maths).
-* **Tools:** Python 3.10, WSL2, Docker, Git.
+* **Tools:** Python, WSL2, Docker, Git.
 
 ### Key Engineering Takeaways
 * **Hardware Optimization:** Successfully offloaded compute-heavy tasks (Reranking/Inference) to local GPU hardware.
