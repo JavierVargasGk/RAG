@@ -3,16 +3,17 @@
 
 ## Quick Start
 1. **Clone the Repo:** `git clone https://github.com/JavierVargasGk/RAG`
-2. **Infrastructure:** Start the docker container that holds the database (ParadeDB): `docker-compose up -d`
-3. **Engine:** Install and run **Ollama** on your host machine:
+2. Move inside the repo via cd/open the terminal there
+3. **Infrastructure:** Start the docker container that holds the database (ParadeDB): `docker-compose up -d`
+4. **Engine:** Install and run **Ollama** on your host machine:
    ```powershell
    # Windows (PowerShell)
    irm [https://ollama.com/install.ps1](https://ollama.com/install.ps1) | iex
-4. create and open the venv using `python -m venv venv` then activate with `.\venv\Scripts\activate`(Windows) or `source venv/bin/activate`(Mac/Linux)
-5. Install dependencies with `pip install -r requirements.txt`
-6. Make a .env file with your Voyage API key, and the docker information, then save it.
-7. Now you can add whatever files you want the RAG to work with into your `data/` folder.
-8. Finally you just run the main script `app.py` and once its done ingesting the data you uploded (Its tied to VoyageAPI rate limits, so if you decide to go the free route, i will take a few hours for the initial hydration, but once its hydrated, it will work instantly, it should auto open your very own RAG.
+5. create and open the venv using `python -m venv venv` then activate with `.\venv\Scripts\activate`(Windows) or `source venv/bin/activate`(Mac/Linux)
+6. Install dependencies with `pip install -r requirements.txt`
+7. Create a `.env` file with your `VOYAGE_API_KEY` and `Database credentials`.
+8. Now you can add whatever files you want the RAG to work with into your `data/` folder.
+9. Finally you just run the main script `app.py` and once its done ingesting the data you uploded (Its tied to VoyageAPI rate limits, so if you decide to go the free route, i will take a few hours for the initial hydration, but once its hydrated, it will work instantly, it should auto open your very own RAG.
    
 ## Future TODO
 * **Prettier front-end**: GUI is a work in progress.
@@ -20,37 +21,6 @@
 * **Better ingesting for library/framework documentations**: Few are the libraries that have their entire framework/library docs on a PDF, so adding this is a priority if this is meant to be used as a coding helper.
 
 ## Project Architecture
-graph TD
-    subgraph "Windows Host (High-Performance Compute)"
-        Ollama[Ollama - Llama 3.1]
-        GPU[RTX 4060 GPU]
-        Ollama --> GPU
-    end
-
-    subgraph "WSL2 (Linux Environment)"
-        App[App Logic - Python/Chainlit]
-        DB[(ParadeDB / PostgreSQL)]
-        Rerank[Local Cross-Encoder Reranker]
-        
-        App --> DB
-        App --> Rerank
-        Rerank --> GPU
-    end
-
-    subgraph "External APIs"
-        Voyage[Voyage AI - Code Embeddings]
-    end
-
-    User((User)) -->|Query| App
-    App -->|1. Generate Embeds| Voyage
-    App -->|2. Hybrid Search| DB
-    DB -->|Top 10 Candidates| Rerank
-    Rerank -->|3. Top 5 Relevant Chunks| App
-    App -->|4. Final Context| Ollama
-    Ollama -->|Grounded Response| User
-
-    style Windows Host fill:#f9f,stroke:#333,stroke-width:2px
-    style WSL2 fill:#bbf,stroke:#333,stroke-width:2px
 The system implements a production-grade RAG pipeline focused on high-precision retrieval:
 1. **Ingestion & Embedding:** Automated ETL pipeline using **Voyage** (specialized for technical data) with vector indexing in **ParadeDB**.
 2. **Hybrid Retrieval:** Executes a fused search query (BM25 + Vector Similarity) to capture both keyword exact-matches and semantic context.
@@ -73,6 +43,7 @@ To maximize local hardware while maintaining a Linux-native environment:
 * **Hardware Optimization:** Successfully offloaded compute-heavy tasks (Reranking/Inference) to local GPU hardware.
 * **Search Precision:** Improved retrieval accuracy by implementing a "Retrieve & Rerank" strategy rather than relying on raw vector similarity.
 * **Environment Management:** Configured cross-platform communication between Linux (WSL2) and Windows for high-performance AI workloads.
+
 
 
 
