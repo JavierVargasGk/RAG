@@ -17,6 +17,15 @@ import os
 
 if __name__ == "__main__":
     logger.info("Starting the RAG Ingestion process...")
-    run_ingest()
+    while True:
+        try:
+            run_ingest()
+            logger.info("Ingestion completed successfully!")
+            break
+        except Exception as e:
+            logger.error(f"Ingestion crashed with error: {e}. Retrying in 10s...")
+            import time
+            time.sleep(10)
+            
     target_path = os.path.join("src", "core", "search.py") 
     run_chainlit(target_path)
