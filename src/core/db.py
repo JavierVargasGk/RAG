@@ -9,7 +9,7 @@ load_dotenv()
 
 EMBEDDING_MODEL = "voyage-code-3"
 
-vo = voyageai.Client(api_key=os.getenv("VOYAGE_API"))
+vo = voyageai.Client(api_key=os.getenv("VOYAGE_API"), timeout=120)
 
 
 def get_connection_string():

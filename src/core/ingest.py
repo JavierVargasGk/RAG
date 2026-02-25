@@ -116,7 +116,6 @@ def ingestPdf(filePath: str):
                 elapsed = time.time() - start_time
                 sleep_needed = max(0, REQUEST_INTERVAL - elapsed)
                 logger.info(f"Batch took {elapsed:.2f}s. Sleeping for {sleep_needed:.2f}s")
-                time.sleep(sleep_needed)
                 if (i + len(batch)) % 100 == 0:
                     with open(checkpoint_path, "wb") as f:
                         checkpoint_data = {
@@ -127,6 +126,7 @@ def ingestPdf(filePath: str):
                         }
                         pickle.dump(checkpoint_data, f)
                         logger.info(f"Checkpoint saved at {i + len(batch)}")
+                time.sleep(sleep_needed)
                 break
             except Exception as e:
                 if "429" in str(e) or "limit" in str(e).lower():

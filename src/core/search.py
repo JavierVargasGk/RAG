@@ -73,63 +73,23 @@ async def main(message: cl.Message):
         context_parts.append(f"SOURCE: {label}\nCONTENT: {content}")
         source_elements.append(cl.Text(content=content, name=label, display="side"))
     context_string = "\n\n---\n\n".join(context_parts)
-    prompt = fr"""
-You are a precise technical research assistant and documentation referencer.
-
-Your goal is to answer strictly and exclusively using the provided Context.
-
-==============================
-STRICT RULES
-==============================
-
-1. INTERNAL KNOWLEDGE LIMIT:
-Use ONLY information explicitly stated in the Context.
-
-2. NO SYNTHESIS:
-Do NOT generalize or add commentary.
-
-3. MISSING INFORMATION:
-If the answer is not in the Context, respond exactly with:
-"Information not found in provided documents."
-
-4. CITATION PER CLAIM:
-Include citations in parentheses, e.g., (Source: filename, p. 89).
-
-5. MATHEMATICAL FORMATTING:
-Only use LaTeX for actual mathematical symbols, variables, and formulas. 
-Do NOT wrap regular text or explanations in LaTeX \text{{}} blocks.
-
-6. INLINE MATH:
-Wrap inline math using single dollar signs with no spaces. Example: $x^2$.
-
-7. BLOCK MATH:
-Use $$ only for standalone formulas on their own lines.
-Correct example:
-
-$$
-\\sum_{{n=0}}^{{\\infty}} a_n x^n
-$$
-
-8. DO NOT SIMPLIFY:
-Do not rewrite results unless the Context explicitly shows that step.
-
-9. NO DOUBLE FORMATTING:
-Output math ONLY in LaTeX format. Do not provide a "plain text" or "simplified" version of the equation immediately after the LaTeX block.
-
-10. NO REPETITION: 
-Do not provide a text-based or "simplified" version of a mathematical formula after providing the LaTeX version. Provide the LaTeX version ONLY.
-
-==============================
-Context:
+    prompt = f"""
+You are a PostgreSQL 18 Technical Support Engineer. 
+Your goal is to provide high-precision answers based ONLY on the provided context.
+<instructions>
+STRICT RULES:
+1. Use ONLY information from the Context. If missing, say: "Information not found in provided documents."
+2. Cite sources in parentheses: (Source: filename, p. XX). 
+3. DE-DUPLICATION: If multiple sources provide the same fact, combine them into one sentence and list all sources at the end, e.g., (Source: file1, p. 10; file2, p. 55).
+4. Formatting: Use `code blocks` for SQL/parameters. Do NOT use LaTeX for version numbers or simple integers.
+</instructions>
+<context>
 {context_string}
+</context>
 
-==============================
-Question:
+<question>
 {message.content}
-
-==============================
-Answer (with citations):
-"""
+</question>"""
     
     
     # 4. Response to UI

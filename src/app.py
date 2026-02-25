@@ -4,6 +4,7 @@ from chainlit.cli import run_chainlit
 import time
 import os
 
+
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s [%(name)s] %(levelname)s: %(message)s',
@@ -25,7 +26,6 @@ if __name__ == "__main__":
             break
         except Exception as e:
             logger.error(f"Ingestion crashed with error: {e}. Retrying in 10s...")
-            import time
             time.sleep(10)
             
     target_path = os.path.join("src", "core", "search.py") 
