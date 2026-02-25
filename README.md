@@ -16,6 +16,7 @@
 9. Finally you just run the main script `app.py` and once its done ingesting the data you uploded (Its tied to VoyageAPI rate limits, so if you decide to go the free route, i will take a few hours for the initial hydration, but once its hydrated, it will work instantly, it should auto open your very own RAG.
    
 ## Future TODO
+* **Context Retrieval**: Must have for any LLM so its not a glorified Google Search Bar Wrapepr
 * **Prettier front-end**: GUI is a work in progress.
 * **Web based ingestion**: I want the RAG to be able to ingest files inside of the browser GUI.
 * **Better ingesting for library/framework documentations**: Few are the libraries that have their entire framework/library docs on a PDF, so adding this is a priority if this is meant to be used as a coding helper.
@@ -43,6 +44,7 @@ To maximize local hardware while maintaining a Linux-native environment:
 * **Hardware Optimization:** Successfully offloaded compute-heavy tasks (Reranking/Inference) to local GPU hardware.
 * **Search Precision:** Improved retrieval accuracy by implementing a "Retrieve & Rerank" strategy rather than relying on raw vector similarity.
 * **Environment Management:** Configured cross-platform communication between Linux (WSL2) and Windows for high-performance AI workloads.
+
 
 
 
