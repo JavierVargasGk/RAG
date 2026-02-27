@@ -170,3 +170,7 @@ default_avatar_file_url = ""
 
 [meta]
 generated_by = "2.9.6"
+
+[run]
+host = "0.0.0.0"
+port = 8000

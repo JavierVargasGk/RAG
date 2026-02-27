@@ -1,5 +1,5 @@
 import fitz
-from core.db import get_connection_string, file_exists, embed_text
+from src.db import get_connection_string, file_exists, embed_text
 import time
 import logging
 import voyageai

@@ -46,7 +46,7 @@ def embed_text(texts: list, is_query: bool = False):
     """
     input_type = "query" if is_query else "document"
     try:
-        res = vo.embed(texts, model=EMBEDDING_MODEL, input_type=input_type)
+        res = vo.embed(texts, model=EMBEDDING_MODEL, input_type=input_type,output_dimension=1024)
         return res.embeddings
     except Exception as e:
         logger.error(f"Embedding failure ({EMBEDDING_MODEL}): {e}")

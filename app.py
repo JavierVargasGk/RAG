@@ -1,9 +1,14 @@
 import logging
-from core.ingest import run_ingest
+from src.ingest import run_ingest
 from chainlit.cli import run_chainlit
 import time
 import os
+import sys
 
+
+PROJECT_ROOT = os.path.dirname(os.path.abspath(__file__))
+if PROJECT_ROOT not in sys.path:
+    sys.path.append(PROJECT_ROOT)
 
 logging.basicConfig(
     level=logging.INFO,
@@ -17,6 +22,7 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 
+
 if __name__ == "__main__":
     logger.info("Starting the RAG Ingestion process...")
     while True:
@@ -27,6 +33,5 @@ if __name__ == "__main__":
         except Exception as e:
             logger.error(f"Ingestion crashed with error: {e}. Retrying in 10s...")
             time.sleep(10)
-            
-    target_path = os.path.join("src", "core", "search.py") 
+    target_path = os.path.join("src", "search.py") 
     run_chainlit(target_path)

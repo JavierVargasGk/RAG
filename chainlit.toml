@@ -4,7 +4,6 @@ session_timeout = 3600
 cache = false
 
 [features]
-# Activamos LaTeX para tus ecuaciones de Moody's
 latex = true
 # Permitimos subida de archivos si lo necesitas luego
 [features.spontaneous_file_upload]
