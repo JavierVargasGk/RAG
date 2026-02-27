@@ -81,18 +81,24 @@ class RagService:
                     full_response.append(token)
                     yield token
 
-    # Main method to get RAG response for a query
-    def get_response(self, query):
+    # Main method to get RAG response with context for a query
+    def get_response_and_context(self, query):
         query_vector = embed_text([query], is_query=True)[0]
         candidates = self.search_database(query_vector, query)
-        
         if not candidates:
-            yield "No relevant documents found."
-            return
+            return None, []
 
         ranked_results = self.rerank_results(query, candidates)
-        context = "\n".join([f"Source: {r[1]} p.{r[2]}\nContent: {r[0]}" for r in ranked_results])
+        formatted_context = "\n".join([f"Source: {r[1]} p.{r[2]}\nContent: {r[0]}" for r in ranked_results])
+        raw_context_list = [r[0] for r in ranked_results]
         
-        yield from self.generate_response(query, context)
+        return self.generate_response(query, formatted_context), raw_context_list
+    # Method that gets called in the UI, only returning the response
+    def get_response(self, query):
+        gen, _ = self.get_response_and_context(query)
+        if gen is None:
+            yield "No relevant documents found."
+            return
+        yield from gen
 
   

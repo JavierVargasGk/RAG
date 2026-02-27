@@ -1,99 +1,95 @@
 /**
- * ALBERT - INVESTIGATION ASSISTANT THEME
- * Look & Feel: GitHub Dark Mode
- * Framework: Chainlit / Tailwind / MUI
+ * ALBERT - POSTGRES 18 INVESTIGATION ASSISTANT
+ * Theme: GitHub Dark High-Contrast
  */
 
-/* 1. CONFIGURACIÓN DE VARIABLES GLOBALES */
 :root {
-  --background: 212 12% 9% !important;   /* #0d1117 */
-  --foreground: 210 17% 82% !important;  /* #e6edf3 */
-  --primary: 212 92% 45% !important;      /* Blue 500 GitHub */
-  --primary-foreground: 0 0% 100% !important;
-  --border: 215 15% 18% !important;      /* #30363d */
-  --card: 212 12% 11% !important;        /* #161b22 */
+  --background: #0d1117 !important;
+  --foreground: #e6edf3 !important;
+  --primary: #2f81f7 !important; /* GitHub Blue */
+  --border: #30363d !important;
+  --card: #161b22 !important;
 }
 
-/* 2. REBRANDING (ELIMINACIÓN DE LOGO Y RENOMBRE) */
-/* Oculta el logo original por clase, ID y selector de atributo de imagen */
-.cl-logo, 
-#header-logo, 
-.cl-header img,
-[data-testid="chat-logo"] {
+/* 1. GLOBAL OVERRIDES */
+body, #root, main {
+    background-color: var(--background) !important;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif !important;
+}
+
+/* 2. REBRANDING HEADER */
+.cl-header {
+    background-color: #010409 !important;
+    border-bottom: 1px solid var(--border) !important;
+}
+
+/* Hide original logo */
+[data-testid="chat-logo"], .cl-logo {
     display: none !important;
 }
 
-/* Inyecta el nombre del asistente 'ALBERT' mediante pseudo-elemento */
+/* Inject ALBERT Brand */
 .cl-header-customer-logo::after {
-    content: "ALBERT";
-    font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Monaco, Consolas, monospace;
-    font-weight: 900;
-    font-size: 1.3rem;
+    content: "ALBERT // PG18";
+    font-family: "SF Mono", "Fira Code", monospace;
+    font-weight: 700;
     color: #58a6ff;
-    letter-spacing: -0.5px;
-    padding-left: 8px;
-    display: flex;
-    align-items: center;
+    font-size: 1.1rem;
+    letter-spacing: 1px;
 }
 
-/* 3. ARQUITECTURA DE FONDO */
-/* Asegura que no haya fugas de color blanco en el scroll o paneles */
-#root, body, main, .bg-background {
-    background-color: #0d1117 !important;
-}
-
-/* 4. COMPONENTES DE ENTRADA (PROMPT BAR) */
-/* Ajuste del contenedor de Material UI (MUI) y Stack de Chainlit */
-.cl-input-container, 
-.MuiInputBase-root,
-.MuiStack-root:has(> #chat-input) {
-    background-color: #0d1117 !important;
-    border: 1px solid #30363d !important;
-    border-radius: 6px !important;
-    transition: border-color 0.2s, box-shadow 0.2s;
-}
-
-/* Área de texto interactiva */
-#chat-input {
-    background-color: transparent !important;
-    color: #e6edf3 !important;
-    caret-color: #58a6ff;
-}
-
-/* Estado Focus: Simulación de búsqueda en GitHub */
-.cl-input-container:focus-within {
-    border-color: #0969da !important;
-    box-shadow: 0 0 0 3px rgba(31, 111, 235, 0.3) !important;
-}
-
-/* 5. ELEMENTOS DE ACCIÓN (BOTONES) */
-/* Reemplazo del color institucional (Rojo) por Azul Corporativo */
-button[type="submit"], 
-.bg-primary {
-    background-color: #0969da !important;
-    color: #ffffff !important;
-    border-radius: 6px;
-}
-
-button[type="submit"]:hover {
-    background-color: #1f6feb !important;
-}
-
-/* 6. RAG COMPONENTS (FUENTES Y CITAS) */
-/* Estilo para los bloques de documentos recuperados (Chunks) */
-.cl-source {
+/* 3. MESSAGE BUBBLES (The "Pretty" Part) */
+/* Bot messages - Dark Card style */
+.cl-message-content.assistant {
     background-color: #161b22 !important;
     border: 1px solid #30363d !important;
-    color: #8b949e !important;
-    font-size: 0.85rem;
+    border-radius: 12px !important;
+    padding: 1rem !important;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.5);
 }
 
-/* 7. VISUALIZACIÓN DE MATEMÁTICAS (LATEX) */
-/* Contenedor KaTeX optimizado para contraste oscuro */
-.katex-display {
-    background: #161b22 !important;
-    border: 1px solid #30363d !important;
-    padding: 1.2rem !important;
+/* User messages - Clean & Right-aligned */
+.cl-message-content.user {
+    background-color: transparent !important;
+    border-left: 2px solid #58a6ff !important;
+    margin-bottom: 20px;
+}
+
+/* 4. CODE BLOCKS (Optimized for Postgres SQL) */
+pre {
+    background-color: #010409 !important;
+    border: 1px solid #444c56 !important;
     border-radius: 8px !important;
-    margin: 1.5rem 0 !important;
+    padding: 16px !important;
+}
+
+code {
+    font-family: "Fira Code", monospace !important;
+    color: #79c0ff !important;
+}
+
+/* 5. INPUT BAR (GitHub Search Style) */
+.cl-input-container {
+    background-color: #0d1117 !important;
+    border: 1px solid #30363d !important;
+    border-radius: 8px !important;
+    max-width: 900px !important;
+    margin: 0 auto 30px auto !important;
+}
+
+#chat-input {
+    font-size: 1rem !important;
+}
+
+/* 6. SOURCES / CHUNKS */
+.cl-source {
+    border: 1px solid #30363d !important;
+    background-color: #0d1117 !important;
+    color: #8b949e !important;
+    transition: all 0.2s;
+}
+
+.cl-source:hover {
+    border-color: #58a6ff !important;
+    color: #e6edf3 !important;
 }
