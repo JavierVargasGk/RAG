@@ -14,7 +14,7 @@ logger = logging.getLogger(__name__)
 def getTextFromPDF(filePath: str):
     doc = fitz.open(filePath)
     pages_data = []
-    logger.info(f"Parsing {os.path.basename(filePath)} with Markdown-aware logic.")
+    logger.info(f"Parsing {os.path.basename(filePath)}.")
     for i, page in enumerate(doc):
         blocks = page.get_text("dict")["blocks"]
         md_text = ""
@@ -41,9 +41,9 @@ def getTextFromPDF(filePath: str):
 
 #Split data into chunks of 1000 characters with an overlap of 200 characters (or changed if needed)
 def getChunks(data: str,chunkSize: int = 1000, overlap: int=200):
-    if(data == ""):
-        logger.warning("Empty data received for chunking.")
-        raise ValueError("Data cannot be empty.")
+    if not data.strip():
+        logger.warning("Empty page skipped.")
+        return []
     if(chunkSize <= 0):
         logger.error(f"Invalid chunk size: {chunkSize}. Must be greater than 0.")
         raise ValueError("Chunk size must be greater than 0.")
@@ -82,6 +82,7 @@ def ingestPdf(filePath: str):
     #This opens a pkl file, loading all the data if it exists so we dont have to embed it again from 0 but instead keep it there
     checkpoint_path = f"data/checkpoints/checkpoint_{filename}.pkl" # 
     if os.path.exists(checkpoint_path):
+        logger.info(f"Restarting ingestion for {filename}")
         with open(checkpoint_path, "rb") as f:
             data = pickle.load(f)
             all_chunks = data["chunks"]
@@ -90,6 +91,7 @@ def ingestPdf(filePath: str):
             start_idx = len(all_vectors)
     else:
     #if pickle file doesnt exist we start from 0 and do the whole process, this is for the first time ingesting a file or if something went wrong and we need to start over
+        logger.info(f"Starting ingestion for {filename}")
         pages_data = getTextFromPDF(filePath)
         all_chunks = []
         all_metadata = [] 
