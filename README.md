@@ -14,10 +14,13 @@
 7. Create a `.env` file with your `VOYAGE_API_KEY` and `Database credentials`.
 8. Now you can add whatever files you want the RAG to work with into your `data/` folder.
 9. Finally you just run the main script `app.py` and once its done ingesting the data you uploded (Its tied to VoyageAPI rate limits, so if you decide to go the free route, i will take a few hours for the initial hydration, but once its hydrated, it will work instantly, it should auto open your very own RAG.
-   
+
+## Current WIP
+* **Prettier front-end**: Currently moving the whole front end from Chainlit to NextJS.
+
+
 ## Future TODO
-* **Context Retrieval**: Must have for any LLM so its not a glorified Google Search Bar Wrapepr
-* **Prettier front-end**: GUI is a work in progress.
+* **Context Retrieval**: Must have for any LLM so its not a glorified Google Search Bar Wrappper
 * **Web based ingestion**: I want the RAG to be able to ingest files inside of the browser GUI.
 * **Better ingesting for library/framework documentations**: Few are the libraries that have their entire framework/library docs on a PDF, so adding this is a priority if this is meant to be used as a coding helper.
 
@@ -37,13 +40,14 @@ To maximize local hardware while maintaining a Linux-native environment:
 ### Tech Stack
 * **Models:** Llama 3.1 (Inference), Cross-Encoders (Reranking), Voyage AI (Embeddings).
 * **Data Layer:** ParadeDB / PostgreSQL.
-* **Interface:** Chainlit (LaTeX formula support for maths).
+* **Interface:** Chainlit (LaTeX formula support for math, code, etc).
 * **Tools:** Python, WSL2, Docker, Git.
 
 ### Key Engineering Takeaways
 * **Hardware Optimization:** Successfully offloaded compute-heavy tasks (Reranking/Inference) to local GPU hardware.
 * **Search Precision:** Improved retrieval accuracy by implementing a "Retrieve & Rerank" strategy rather than relying on raw vector similarity.
 * **Environment Management:** Configured cross-platform communication between Linux (WSL2) and Windows for high-performance AI workloads.
+
 
 
 
