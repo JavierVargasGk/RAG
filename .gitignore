@@ -2,7 +2,10 @@
 __pycache__/
 *.env
 .DS_Store
-
+.deepeval
+.files
+.pytest_cache
+.vscode
 *.pdf
 *.log
 *.pkl
