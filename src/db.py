@@ -34,6 +34,9 @@ def file_exists(filename: str) -> bool:
             with conn.cursor() as cur:
                 cur.execute("SELECT EXISTS(SELECT 1 FROM doc_chunks WHERE filename = %s)", (filename,))
                 return cur.fetchone()[0] 
+    except psycopg.OperationalError as e:
+        logger.error(f"Database is unreachable. {e}")
+        raise ConnectionError("Database Down.")
     except Exception as e:
         logger.error(f"Database error while checking file: {e}")
         return False

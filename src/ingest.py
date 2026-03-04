@@ -106,39 +106,41 @@ def ingestPdf(filePath: str):
     SMALL_BATCH_SIZE = 10 
     REQUEST_INTERVAL = 20.5
     logger.info(f"Embedding {len(all_chunks)} chunks...")
-    for i in range(start_idx, len(all_chunks), SMALL_BATCH_SIZE):
+    remaining_chunks = all_chunks[start_idx:]
+    for batch_idx, batch in enumerate(makeBatches(remaining_chunks, batchSize=SMALL_BATCH_SIZE)):
         start_time = time.time()
-        batch = all_chunks[i : i + SMALL_BATCH_SIZE]
-        retry_delay = 5
-        while True: 
+        current_global_idx = start_idx + (batch_idx * SMALL_BATCH_SIZE)
+        retry_delay = 5 
+        while True:
             try:
                 embeddings = embed_text(batch, is_query=False)
                 all_vectors.extend(embeddings)
-                logger.info(f"Progress: {i + len(batch)}/{len(all_chunks)}")
+                total_done = current_global_idx + len(batch)
+                logger.info(f"Progress: {total_done}/{len(all_chunks)}")
                 elapsed = time.time() - start_time
                 sleep_needed = max(0, REQUEST_INTERVAL - elapsed)
-                logger.info(f"Batch took {elapsed:.2f}s. Sleeping for {sleep_needed:.2f}s")
-                if (i + len(batch)) % 100 == 0:
+                if (batch_idx + 1) % 10 == 0:
                     with open(checkpoint_path, "wb") as f:
-                        checkpoint_data = {
-                        "chunks": all_chunks, 
-                        "vectors": all_vectors, 
-                        "metadata": all_metadata,                                   
-                        "last_index": i + len(batch)
-                        }
-                        pickle.dump(checkpoint_data, f)
-                        logger.info(f"Checkpoint saved at {i + len(batch)}")
+                        pickle.dump({
+                            "chunks": all_chunks,
+                            "vectors": all_vectors,
+                            "metadata": all_metadata,
+                            "last_index": total_done
+                        }, f)
+                    logger.info(f"checkpointed at {total_done}/{len(all_chunks)}")
+                logger.info(f"Batch took {elapsed:.2f}s. Sleeping for {sleep_needed:.2f}s")
+            
                 time.sleep(sleep_needed)
                 break
             except Exception as e:
-                if "429" in str(e) or "limit" in str(e).lower():
-                    logger.warning(f"Rate limit reached. Retrying in {retry_delay}s")
-                    time.sleep(retry_delay)
-                    retry_delay *= 1.5
-                    if retry_delay > 120: raise e
-                else:
-                    logger.error(f"Embedding error: {e}")
-                    raise e
+                    if "429" in str(e) or "limit" in str(e).lower():
+                        logger.warning(f"Rate limit reached. Retrying in {retry_delay}s")
+                        time.sleep(retry_delay)
+                        retry_delay *= 1.5
+                        if retry_delay > 120: raise e
+                    else:
+                        logger.error(f"Embedding error: {e}")
+                        raise e
     conn_str = get_connection_string()
     try:
         with psycopg.connect(conn_str) as conn:

@@ -1,6 +1,6 @@
 /**
  * ALBERT - POSTGRES 18 INVESTIGATION ASSISTANT
- * Theme: GitHub Dark High-Contrast
+ * Theme: GitHub Dark High-Contrast (Repaired)
  */
 
 :root {
@@ -9,9 +9,16 @@
   --primary: #2f81f7 !important; /* GitHub Blue */
   --border: #30363d !important;
   --card: #161b22 !important;
+  --success: #3fb950 !important; /* GitHub Green */
+  --danger: #f85149 !important;  /* GitHub Red */
 }
 
-/* 1. GLOBAL OVERRIDES */
+/* 1. GLOBAL & READABILITY RESET (FIXES BLACK TEXT) */
+body, #root, main, div, p, span, li, section {
+    background-color: transparent;
+    color: var(--foreground) !important; /* Forces all text to light gray/white */
+}
+
 body, #root, main {
     background-color: var(--background) !important;
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif !important;
@@ -33,63 +40,89 @@ body, #root, main {
     content: "ALBERT // PG18";
     font-family: "SF Mono", "Fira Code", monospace;
     font-weight: 700;
-    color: #58a6ff;
+    color: #58a6ff !important;
     font-size: 1.1rem;
     letter-spacing: 1px;
 }
 
-/* 3. MESSAGE BUBBLES (The "Pretty" Part) */
-/* Bot messages - Dark Card style */
+/* 3. MESSAGE BUBBLES */
+/* Assistant messages - Dark Card style */
 .cl-message-content.assistant {
-    background-color: #161b22 !important;
-    border: 1px solid #30363d !important;
+    background-color: var(--card) !important;
+    border: 1px solid var(--border) !important;
     border-radius: 12px !important;
-    padding: 1rem !important;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+    padding: 1.2rem !important;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.6);
 }
 
 /* User messages - Clean & Right-aligned */
 .cl-message-content.user {
     background-color: transparent !important;
-    border-left: 2px solid #58a6ff !important;
-    margin-bottom: 20px;
+    border-left: 3px solid var(--primary) !important;
+    padding-left: 15px !important;
+    margin-bottom: 25px;
 }
 
-/* 4. CODE BLOCKS (Optimized for Postgres SQL) */
+/* 4. CODE BLOCKS & SYNTAX (Fixes code readability) */
 pre {
     background-color: #010409 !important;
     border: 1px solid #444c56 !important;
     border-radius: 8px !important;
     padding: 16px !important;
+    overflow-x: auto;
 }
 
-code {
-    font-family: "Fira Code", monospace !important;
-    color: #79c0ff !important;
+code, pre *, code * {
+    font-family: "Fira Code", "SF Mono", monospace !important;
+    color: #79c0ff !important; /* Light blue for code */
+    background-color: transparent !important;
+}
+
+/* Bold text optimization */
+strong, b {
+    color: #ffa657 !important; /* Warm orange for emphasis in docs */
+    font-weight: 600;
 }
 
 /* 5. INPUT BAR (GitHub Search Style) */
 .cl-input-container {
     background-color: #0d1117 !important;
-    border: 1px solid #30363d !important;
+    border: 1px solid var(--border) !important;
     border-radius: 8px !important;
     max-width: 900px !important;
     margin: 0 auto 30px auto !important;
 }
 
-#chat-input {
+#chat-input, .cl-input-container input {
+    color: var(--foreground) !important;
+    background-color: transparent !important;
     font-size: 1rem !important;
+    caret-color: var(--primary);
 }
 
 /* 6. SOURCES / CHUNKS */
 .cl-source {
-    border: 1px solid #30363d !important;
-    background-color: #0d1117 !important;
+    border: 1px solid var(--border) !important;
+    background-color: #010409 !important;
     color: #8b949e !important;
-    transition: all 0.2s;
+    font-size: 0.85rem;
+    transition: all 0.2s ease-in-out;
 }
 
 .cl-source:hover {
-    border-color: #58a6ff !important;
-    color: #e6edf3 !important;
+    border-color: var(--primary) !important;
+    color: var(--foreground) !important;
+    transform: translateY(-2px);
+}
+
+/* 7. DEEPEVAL SCORE LOG VISUALS */
+/* Logic to make "SCORE: 1.0" or "SCORE: 0.0" pop if they appear in text */
+span:contains("SCORE: 1.0"), span:contains("PASS") {
+    color: var(--success) !important;
+    font-weight: bold;
+}
+
+span:contains("SCORE: 0.3"), span:contains("FAIL") {
+    color: var(--danger) !important;
+    font-weight: bold;
 }
