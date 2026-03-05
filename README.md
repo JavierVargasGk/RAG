@@ -11,7 +11,7 @@
    irm [https://ollama.com/install.ps1](https://ollama.com/install.ps1) | iex
 5. create the venv using `python -m venv venv` then activate it with `.\venv\Scripts\activate`(Windows) or `source venv/bin/activate`(Mac/Linux)
 6. Install dependencies with `pip install -r requirements.txt`
-7. Create a `.env` file with your `VOYAGE_API_KEY` and `Database credentials`. (use .venv.example as a guide)
+7. Create a `.env` file with your `VOYAGE_API_KEY` and `Database credentials`. (use the provided `.venv.example` as a guide)
 8. Now you can add whatever files you want the RAG to work with into your `data/` folder.
 9. Finally you just run the main script `app.py` and once its done ingesting the data you uploded (Its tied to VoyageAPI rate limits, so if you decide to go the free route, i will take a few hours for the initial hydration, but once its hydrated, it will work instantly, it should auto open your very own RAG.
 
@@ -47,6 +47,7 @@ To maximize local hardware while maintaining a Linux-native environment:
 * **Hardware Optimization:** Successfully offloaded compute-heavy tasks (Reranking/Inference) to local GPU hardware.
 * **Search Precision:** Improved retrieval accuracy by implementing a "Retrieve & Rerank" strategy rather than relying on raw vector similarity.
 * **Environment Management:** Configured cross-platform communication between Linux (WSL2) and Windows for high-performance AI workloads.
+
 
 
 
