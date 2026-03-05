@@ -9,7 +9,7 @@
    ```powershell
    # Windows (PowerShell)
    irm [https://ollama.com/install.ps1](https://ollama.com/install.ps1) | iex
-5. create and open the venv using `python -m venv venv` then activate with `.\venv\Scripts\activate`(Windows) or `source venv/bin/activate`(Mac/Linux)
+5. create the venv using `python -m venv venv` then activate it with `.\venv\Scripts\activate`(Windows) or `source venv/bin/activate`(Mac/Linux)
 6. Install dependencies with `pip install -r requirements.txt`
 7. Create a `.env` file with your `VOYAGE_API_KEY` and `Database credentials`.
 8. Now you can add whatever files you want the RAG to work with into your `data/` folder.
@@ -47,6 +47,7 @@ To maximize local hardware while maintaining a Linux-native environment:
 * **Hardware Optimization:** Successfully offloaded compute-heavy tasks (Reranking/Inference) to local GPU hardware.
 * **Search Precision:** Improved retrieval accuracy by implementing a "Retrieve & Rerank" strategy rather than relying on raw vector similarity.
 * **Environment Management:** Configured cross-platform communication between Linux (WSL2) and Windows for high-performance AI workloads.
+
 
 
 
